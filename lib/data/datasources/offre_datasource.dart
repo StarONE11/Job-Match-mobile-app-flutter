@@ -8,7 +8,7 @@ import '../models/offre_emploi_model.dart';
 class OffreDataSource {
   final Dio _dio;
 
-  // L'URL de ton API FastAPI
+  // L'URL de notre API FastAPI
   // En local : http://10.0.2.2:8000 (émulateur Android)
   // En production : https://ton-api.render.com
   OffreDataSource()
