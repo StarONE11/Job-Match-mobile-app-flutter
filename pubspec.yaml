@@ -1,0 +1,33 @@
+name: jobmatch_togo
+description: Plateforme de matching emploi - Version Togo
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Gestion d'état + Navigation + Injection
+  get: ^4.6.6
+
+  # Appels HTTP vers l'API FastAPI
+  dio: ^5.4.0
+
+  # Either<Erreur, Données> — gestion propre des erreurs
+  dartz: ^0.10.1
+
+  # Comparaison d'objets (optionnel mais utile)
+  equatable: ^2.0.5
+
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
