@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  file_picker: ^8.1.2   # sélectionner CV (PDF) et photo
+  image_picker: ^1.1.2  # optionnel, si tu veux l'appareil photo aussi
+  open_filex: ^4.3.4       # pour ouvrir le PDF
 
   # Gestion d'état + Navigation + Injection
   get: ^4.6.6
@@ -31,3 +34,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
