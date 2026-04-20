@@ -1,5 +1,5 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-
 // ─── CONTROLLER PROFIL ────────────────────────────────────────────────────────
 // Gère les données du profil utilisateur.
 // Pour l'instant les données sont statiques (pas encore de backend auth).
@@ -16,6 +16,7 @@ class ProfilController extends GetxController {
   final RxString nomCv        = 'CV_Joe_2026.pdf'.obs;
   final RxString dateCv       = 'Mis à jour il y a 2 jours'.obs;
   final RxBool  cvCharge      = true.obs;
+  final RxString cheminCv = ''.obs;
 
   // Compétences
   final RxList<String> competences = <String>[
@@ -27,6 +28,17 @@ class ProfilController extends GetxController {
   final RxInt favoris      = 5.obs;
   final RxInt entretiens   = 3.obs;
 
+Future<void> choisirCv() async {
+  final result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['pdf'],
+  );
+  if (result != null && result.files.single.path != null) {
+    cheminCv.value = result.files.single.path!;
+    nomCv.value = result.files.single.name;
+    dateCv.value = 'Mis à jour à l\'instant';
+  }
+}
   // Ajouter une compétence
   void ajouterCompetence(String competence) {
     if (competence.trim().isNotEmpty &&
