@@ -239,11 +239,7 @@ class _CarteCv extends StatelessWidget {
 
                   // Bouton modifier
                   GestureDetector(
-                    onTap: () => Get.snackbar(
-                      'CV',
-                      'Fonctionnalité upload bientôt disponible car elle sera gerer par Donia',
-                      snackPosition: SnackPosition.BOTTOM,
-                    ),
+                    onTap: () => ctrl.choisirCv(),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
