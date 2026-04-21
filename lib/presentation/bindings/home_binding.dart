@@ -1,8 +1,11 @@
 import 'package:get/get.dart';
+import '../../core/services/storage_service.dart';
 import '../../data/datasources/offre_datasource.dart';
+import '../../data/datasources/candidat_datasource.dart';
 import '../../data/repositories/offre_repository_impl.dart';
 import '../../domain/usecases/offre_usecases.dart';
 import '../controllers/home_controller.dart';
+import '../controllers/favoris_controller.dart';
 
 // ─── BINDING DE LA HOME PAGE ──────────────────────────────────────────────────
 //
@@ -33,12 +36,20 @@ class HomeBinding extends Bindings {
     Get.lazyPut(() => ChercherOffres(Get.find<OffreRepositoryImpl>()));
     Get.lazyPut(() => VoirStats(Get.find<OffreRepositoryImpl>()));
 
+    // 4a. FavorisController (utilisé aussi par la HomePage pour les favoris)
+    Get.lazyPut<FavorisController>(() => FavorisController(), fenix: true);
+
+    // 4b. CandidatDataSource (pour le matching CV)
+    Get.lazyPut<CandidatDataSource>(() => CandidatDataSource(), fenix: true);
+
     // 4. Le Controller (cerveau de la page)
     Get.lazyPut<HomeController>(
       () => HomeController(
-        voirLesOffres:  Get.find<VoirLesOffres>(),
+        voirLesOffres: Get.find<VoirLesOffres>(),
         chercherOffres: Get.find<ChercherOffres>(),
-        voirStats:      Get.find<VoirStats>(),
+        voirStats: Get.find<VoirStats>(),
+        storage: Get.find<StorageService>(),
+        candidatDs: Get.find<CandidatDataSource>(),
       ),
     );
   }

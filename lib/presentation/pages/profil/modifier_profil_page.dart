@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_textes.dart';
@@ -122,7 +122,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.bleu,
+      color: AppColors.primary,
       padding: EdgeInsets.fromLTRB(
         16,
         MediaQuery.of(context).padding.top + 12,
@@ -185,7 +185,7 @@ class _SectionAvatar extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: const BoxDecoration(
-                      color: AppColors.orange,
+                      color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -203,7 +203,7 @@ class _SectionAvatar extends StatelessWidget {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: AppColors.bleu,
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -227,7 +227,7 @@ class _SectionAvatar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.bleu,
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -341,7 +341,7 @@ class _BoutonSauvegarder extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: AppColors.bleu,
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Text(
@@ -358,3 +358,4 @@ class _BoutonSauvegarder extends StatelessWidget {
     );
   }
 }
+

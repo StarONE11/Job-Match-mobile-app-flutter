@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_textes.dart';
@@ -62,7 +62,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.bleu,
+      color: AppColors.primary,
       padding: EdgeInsets.fromLTRB(
         16,
         MediaQuery.of(context).padding.top + 12,
@@ -123,14 +123,14 @@ class _CarteActiver extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: ctrl.alertesActives.value
-                      ? AppColors.bleuFond
+                      ? AppColors.accentLight
                       : AppColors.fond,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.notifications_rounded,
                   color: ctrl.alertesActives.value
-                      ? AppColors.bleu
+                      ? AppColors.primary
                       : AppColors.texteLight,
                   size: 20,
                 ),
@@ -166,7 +166,7 @@ class _CarteActiver extends StatelessWidget {
                   height: 24,
                   decoration: BoxDecoration(
                     color: ctrl.alertesActives.value
-                        ? AppColors.bleu
+                        ? AppColors.primary
                         : AppColors.bordure,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -271,10 +271,10 @@ class _BoutonFrequence extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: actif ? AppColors.bleu : AppColors.fond,
+            color: actif ? AppColors.primary : AppColors.fond,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: actif ? AppColors.bleu : AppColors.bordure,
+              color: actif ? AppColors.primary : AppColors.bordure,
             ),
           ),
           child: Text(
@@ -324,7 +324,7 @@ class _CarteMotsCles extends StatelessWidget {
               Get.back();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.bleu,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
             ),
@@ -371,7 +371,7 @@ class _CarteMotsCles extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.bleuFond,
+                            color: AppColors.accentLight,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -380,11 +380,11 @@ class _CarteMotsCles extends StatelessWidget {
                               Text(
                                 m,
                                 style: AppTextes.badge.copyWith(
-                                    color: AppColors.bleu, fontSize: 12),
+                                    color: AppColors.primary, fontSize: 12),
                               ),
                               const SizedBox(width: 4),
                               const Icon(Icons.close_rounded,
-                                  size: 12, color: AppColors.bleu),
+                                  size: 12, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -515,10 +515,10 @@ class _CarteTypeContrat extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: actif ? AppColors.bleu : AppColors.fond,
+                        color: actif ? AppColors.primary : AppColors.fond,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: actif ? AppColors.bleu : AppColors.bordure,
+                          color: actif ? AppColors.primary : AppColors.bordure,
                         ),
                       ),
                       child: Text(
@@ -559,7 +559,7 @@ class _BoutonEnregistrer extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: AppColors.bleu,
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Text(
@@ -576,3 +576,4 @@ class _BoutonEnregistrer extends StatelessWidget {
     );
   }
 }
+

@@ -16,6 +16,7 @@ class OffreEmploi {
   final String? lienOffre;
   final DateTime datePublication;
   final bool descriptionComplete;
+  final double scoreMatch; // 0.0 → 1.0 depuis /candidates/match, 0 sinon
 
   const OffreEmploi({
     required this.id,
@@ -31,6 +32,7 @@ class OffreEmploi {
     this.lienOffre,
     required this.datePublication,
     this.descriptionComplete = false,
+    this.scoreMatch = 0.0,
   });
 
   // Retourne la liste des compétences sous forme de liste

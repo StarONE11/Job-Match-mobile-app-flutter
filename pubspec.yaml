@@ -9,9 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  file_picker: ^8.1.2   # sélectionner CV (PDF) et photo
-  image_picker: ^1.1.2  # optionnel, si tu veux l'appareil photo aussi
-  open_filex: ^4.3.4       # pour ouvrir le PDF
+  file_picker: ^8.1.2
+  image_picker: ^1.1.2
+  open_filex: ^4.3.4
+  url_launcher: ^6.3.0  # ouvrir les liens d'offres dans le navigateur
 
   # Gestion d'état + Navigation + Injection
   get: ^4.6.6
@@ -24,6 +25,12 @@ dependencies:
 
   # Comparaison d'objets (optionnel mais utile)
   equatable: ^2.0.5
+
+  # Stockage local clé/valeur (profil utilisateur, premier lancement)
+  shared_preferences: ^2.3.0
+
+  # Accès aux répertoires persistants de l'appareil (copie du CV)
+  path_provider: ^2.1.0
 
   cupertino_icons: ^1.0.2
 

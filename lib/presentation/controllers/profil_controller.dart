@@ -1,124 +1,164 @@
+﻿import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-// ─── CONTROLLER PROFIL ────────────────────────────────────────────────────────
-// Gère les données du profil utilisateur.
-// Pour l'instant les données sont statiques (pas encore de backend auth).
+import 'package:path_provider/path_provider.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../data/datasources/candidat_datasource.dart';
 
 class ProfilController extends GetxController {
-  // Infos utilisateur
-  final RxString nom          = 'Joseph Etenda'.obs;
-  final RxString metier       = 'Développeur Web'.obs;
-  final RxString ville        = 'Lomé, Togo'.obs;
-  final RxString email        = 'joseph.etenda@email.com'.obs;
-  final RxString telephone    = '+228 70 02 04 70'.obs;
+  final StorageService _storage;
+  final CandidatDataSource _candidatDs;
 
-  // CV
-  final RxString nomCv        = 'CV_Joe_2026.pdf'.obs;
-  final RxString dateCv       = 'Mis à jour il y a 2 jours'.obs;
-  final RxBool  cvCharge      = true.obs;
+  ProfilController(
+      {required StorageService storage, required CandidatDataSource candidatDs})
+      : _storage = storage,
+        _candidatDs = candidatDs;
+
+  final RxString nom = ''.obs;
+  final RxString metier = ''.obs;
+  final RxString ville = ''.obs;
+  final RxString email = ''.obs;
+  final RxString telephone = ''.obs;
+
+  final RxString nomCv = ''.obs;
+  final RxString dateCv = ''.obs;
+  final RxBool cvCharge = false.obs;
   final RxString cheminCv = ''.obs;
+  final RxBool uploading = false.obs;
 
-  // Compétences
-  final RxList<String> competences = <String>[
-    'Flutter', 'Python', 'React', 'FastAPI'
-  ].obs;
+  final RxList<String> competences = <String>[].obs;
+  final RxInt candidatures = 0.obs;
+  final RxInt favorisCount = 0.obs;
+  final RxInt entretiens = 0.obs;
 
-  // Statistiques
-  final RxInt candidatures = 12.obs;
-  final RxInt favoris      = 5.obs;
-  final RxInt entretiens   = 3.obs;
+  final RxBool alertesActives = true.obs;
+  final RxString frequenceAlerte = 'immediat'.obs;
+  final RxList<String> motsCles = <String>[].obs;
+  final RxString localisationAlerte = ''.obs;
+  final RxString typeContratAlerte = 'tous'.obs;
 
-Future<void> choisirCv() async {
-  final result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: ['pdf'],
-  );
-  if (result != null && result.files.single.path != null) {
-    cheminCv.value = result.files.single.path!;
-    nomCv.value = result.files.single.name;
-    dateCv.value = 'Mis à jour à l\'instant';
+  @override
+  void onInit() {
+    super.onInit();
+    _chargerDepuisStorage();
   }
-}
-  // Ajouter une compétence
-  void ajouterCompetence(String competence) {
-    if (competence.trim().isNotEmpty &&
-        !competences.contains(competence.trim())) {
-      competences.add(competence.trim());
+
+  void _chargerDepuisStorage() {
+    nom.value = _storage.nom.isNotEmpty ? _storage.nom : 'Mon Profil';
+    metier.value = _storage.metier.isNotEmpty ? _storage.metier : '';
+    ville.value = _storage.ville.isNotEmpty ? _storage.ville : '';
+    email.value = _storage.email.isNotEmpty ? _storage.email : '';
+    telephone.value = _storage.telephone.isNotEmpty ? _storage.telephone : '';
+    cheminCv.value = _storage.cheminCv;
+    nomCv.value = _storage.nomCv.isNotEmpty ? _storage.nomCv : '';
+    cvCharge.value = _storage.cheminCv.isNotEmpty;
+    dateCv.value = cvCharge.value ? 'CV enregistré' : '';
+    localisationAlerte.value = ville.value;
+    if (metier.value.isNotEmpty) motsCles.add(metier.value);
+  }
+
+  Future<void> choisirCv() async {
+    final result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
+    if (result == null || result.files.single.path == null) return;
+
+    final cheminTemp = result.files.single.path!;
+    final nomF = result.files.single.name;
+    // Copie vers le répertoire persistant pour survivre aux redémarrages
+    final chemin = await _copierCvPersistant(cheminTemp, nomF);
+
+    uploading.value = true;
+    try {
+      await _candidatDs.matcherCv(cheminFichier: chemin, topK: 1);
+      await _storage.sauvegarderCv(chemin: chemin, nom: nomF);
+      cheminCv.value = chemin;
+      nomCv.value = nomF;
+      cvCharge.value = true;
+      dateCv.value = 'Mis à jour à l\'instant';
+      Get.snackbar('CV mis à jour', 'Votre CV a été analysé avec succès.',
+          snackPosition: SnackPosition.BOTTOM);
+    } catch (_) {
+      await _storage.sauvegarderCv(chemin: chemin, nom: nomF);
+      cheminCv.value = chemin;
+      nomCv.value = nomF;
+      cvCharge.value = true;
+      dateCv.value = 'Enregistré (sync en attente)';
+      Get.snackbar('CV enregistré',
+          'L\'analyse sera effectuée à la prochaine connexion.',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      uploading.value = false;
     }
   }
 
-  // Retirer une compétence
-  void retirerCompetence(String competence) {
-    competences.remove(competence);
+  /// Copie le fichier source vers documents/ et retourne le chemin permanent.
+  Future<String> _copierCvPersistant(String source, String nomFichier) async {
+    final docDir = await getApplicationDocumentsDirectory();
+    final destination = '${docDir.path}/$nomFichier';
+    await File(source).copy(destination);
+    return destination;
   }
 
-  // Alertes emploi
-  final RxBool alertesActives       = true.obs;
-  final RxString frequenceAlerte    = 'immediat'.obs;
-  final RxList<String> motsCles     = <String>['Flutter', 'Développeur', 'Mobile'].obs;
-  final RxString localisationAlerte = 'Lomé, Togo'.obs;
-  final RxString typeContratAlerte  = 'tous'.obs;
-
-  // Sauvegarder les modifications du profil
-  void sauvegarderProfil({
+  Future<void> sauvegarderProfil({
     required String nouveauNom,
     required String nouveauMetier,
     required String nouvelleVille,
     required String nouvelEmail,
     required String nouveauTelephone,
-  }) {
-    nom.value       = nouveauNom.trim().isEmpty ? nom.value : nouveauNom.trim();
-    metier.value    = nouveauMetier.trim().isEmpty ? metier.value : nouveauMetier.trim();
-    ville.value     = nouvelleVille.trim().isEmpty ? ville.value : nouvelleVille.trim();
-    email.value     = nouvelEmail.trim().isEmpty ? email.value : nouvelEmail.trim();
-    telephone.value = nouveauTelephone.trim().isEmpty ? telephone.value : nouveauTelephone.trim();
-
+  }) async {
+    final n = nouveauNom.trim().isEmpty ? nom.value : nouveauNom.trim();
+    final m =
+        nouveauMetier.trim().isEmpty ? metier.value : nouveauMetier.trim();
+    final v = nouvelleVille.trim().isEmpty ? ville.value : nouvelleVille.trim();
+    final e = nouvelEmail.trim().isEmpty ? email.value : nouvelEmail.trim();
+    final t = nouveauTelephone.trim().isEmpty
+        ? telephone.value
+        : nouveauTelephone.trim();
+    nom.value = n;
+    metier.value = m;
+    ville.value = v;
+    email.value = e;
+    telephone.value = t;
+    await _storage.sauvegarderProfil(
+        nom: n, metier: m, ville: v, email: e, telephone: t);
     Get.back();
-    Get.snackbar(
-      'Profil mis à jour',
-      'Vos modifications ont été sauvegardées',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    Get.snackbar('Profil mis à jour', 'Vos modifications ont été sauvegardées.',
+        snackPosition: SnackPosition.BOTTOM);
   }
 
-  // Sauvegarder les alertes
+  void ajouterCompetence(String c) {
+    if (c.trim().isNotEmpty && !competences.contains(c.trim()))
+      competences.add(c.trim());
+  }
+
+  void retirerCompetence(String c) => competences.remove(c);
+
   void sauvegarderAlertes() {
     Get.back();
     Get.snackbar(
-      'Alertes mises à jour',
-      alertesActives.value
-          ? 'Vous recevrez des alertes emploi'
-          : 'Les alertes ont été désactivées',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+        'Alertes mises à jour',
+        alertesActives.value
+            ? 'Vous recevrez des alertes emploi'
+            : 'Les alertes ont été désactivées',
+        snackPosition: SnackPosition.BOTTOM);
   }
 
-  // Ajouter un mot-clé d'alerte
-  void ajouterMotCle(String motCle) {
-    if (motCle.trim().isNotEmpty && !motsCles.contains(motCle.trim())) {
-      motsCles.add(motCle.trim());
-    }
+  void ajouterMotCle(String m) {
+    if (m.trim().isNotEmpty && !motsCles.contains(m.trim()))
+      motsCles.add(m.trim());
   }
 
-  // Retirer un mot-clé d'alerte
-  void retirerMotCle(String motCle) {
-    motsCles.remove(motCle);
+  void retirerMotCle(String m) => motsCles.remove(m);
+
+  Future<void> deconnecter() async {
+    await _storage.reinitialiser();
+    Get.offAllNamed('/splash');
   }
 
-  // Déconnexion
-  void deconnecter() {
-    Get.offAllNamed('/home');
-    Get.snackbar(
-      'Déconnecté',
-      'À bientôt !',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  // Initiales de l'utilisateur (ex: "Kofi Mensah" → "KM")
   String get initiales {
     final mots = nom.value.trim().split(' ');
     if (mots.length >= 2) return '${mots[0][0]}${mots[1][0]}'.toUpperCase();
-    return nom.value.substring(0, 2).toUpperCase();
+    if (nom.value.length >= 2) return nom.value.substring(0, 2).toUpperCase();
+    return '?';
   }
 }

@@ -1,135 +1,164 @@
+﻿import 'dart:io';
 import 'package:get/get.dart';
+import '../../core/services/storage_service.dart';
+import '../../data/datasources/candidat_datasource.dart';
 import '../../domain/entities/offre_emploi.dart';
 import '../../domain/usecases/offre_usecases.dart';
 
-// ─── CONTROLLER DE LA PAGE ACCUEIL ───────────────────────────────────────────
-//
-// C'est le "cerveau" de la HomePage.
-// Il ne sait pas comment les données sont récupérées (API, cache, etc.)
-// Il sait juste : appeler les UseCases et mettre à jour les variables .obs
-//
-// Les variables .obs sont "vivantes" :
-// quand elles changent → les Obx() dans la page se mettent à jour tout seuls
-
 class HomeController extends GetxController {
-  // ── UseCases injectés ─────────────────────────────────────────────────────
-  final VoirLesOffres   _voirLesOffres;
-  final ChercherOffres  _chercherOffres;
-  final VoirStats       _voirStats;
+  final VoirLesOffres _voirLesOffres;
+  final ChercherOffres _chercherOffres;
+  final VoirStats _voirStats;
+  final StorageService _storage;
+  final CandidatDataSource _candidatDs;
 
   HomeController({
     required VoirLesOffres voirLesOffres,
     required ChercherOffres chercherOffres,
     required VoirStats voirStats,
-  })  : _voirLesOffres  = voirLesOffres,
+    required StorageService storage,
+    required CandidatDataSource candidatDs,
+  })  : _voirLesOffres = voirLesOffres,
         _chercherOffres = chercherOffres,
-        _voirStats      = voirStats;
+        _voirStats = voirStats,
+        _storage = storage,
+        _candidatDs = candidatDs;
 
-  // ── Variables réactives (.obs) ────────────────────────────────────────────
-  // Quand tu changes .value → l'écran se met à jour automatiquement
+  final RxList<OffreEmploi> offres = <OffreEmploi>[].obs;
+  final RxList<OffreEmploi> recommandations = <OffreEmploi>[].obs;
+  final RxBool chargement = false.obs;
+  final RxBool chargementPlus = false.obs;
+  final RxBool chargementReco = false.obs;
+  final RxString erreur = ''.obs;
+  final RxString erreurReco = ''.obs;
+  final RxString ongletActif = 'toutes'.obs;
+  final RxInt totalOffres = 0.obs;
+  final RxBool plusDOffres = true.obs;
 
-  final RxList<OffreEmploi> offres        = <OffreEmploi>[].obs;
-  final RxBool              chargement    = false.obs;
-  final RxBool              chargementPlus = false.obs;
-  final RxString            erreur        = ''.obs;
-  final RxString            ongletActif   = 'recommandees'.obs;
-  final RxInt               totalOffres   = 0.obs;
-  final RxBool              plusDOffres   = true.obs;
+  bool get aRecommandations => recommandations.isNotEmpty;
+  bool get aCv => _storage.cheminCv.isNotEmpty;
 
-  // Pagination
   int _page = 0;
   static const int _limite = 20;
 
-  // ── Cycle de vie GetX ─────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
-    // Chargement automatique au démarrage
+    // 1. Recommandations passées directement depuis l'onboarding
+    final args = Get.arguments;
+    if (args is Map && args['recommandations'] is List) {
+      final recs = (args['recommandations'] as List).cast<OffreEmploi>();
+      if (recs.isNotEmpty) {
+        recommandations.assignAll(recs);
+        ongletActif.value = 'recommandees';
+      }
+    }
+    // 2. Toujours lancer le matching si un CV existe
+    //    (couvre le cas retour après 1ère inscription)
+    if (recommandations.isEmpty && aCv) {
+      ongletActif.value = 'recommandees';
+      chargerRecommandations();
+    }
     chargerOffres();
     chargerStats();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // ── Recommandations basées sur le CV ───────────────────────────────────────
+  Future<void> chargerRecommandations() async {
+    if (!aCv) return;
+    // Vérification que le fichier existe encore (chemin persistant)
+    if (!File(_storage.cheminCv).existsSync()) {
+      // Chemin obsolète (ancienne install, fichier temp supprimé)
+      await _storage.sauvegarderCv(chemin: '', nom: '');
+      erreurReco.value = 'CV introuvable. Re-uploadez votre CV dans le profil.';
+      ongletActif.value = 'toutes';
+      return;
+    }
+    chargementReco.value = true;
+    erreurReco.value = '';
+    try {
+      final result = await _candidatDs.matcherCv(
+        cheminFichier: _storage.cheminCv,
+        topK: 20,
+      );
+      recommandations.assignAll(result.jobs);
+    } catch (e) {
+      erreurReco.value = 'Impossible de charger les recommandations.';
+      // En cas d'erreur, basculer sur l'onglet toutes
+      if (ongletActif.value == 'recommandees') ongletActif.value = 'toutes';
+    } finally {
+      chargementReco.value = false;
+    }
+  }
 
-  // Charge les offres (premier chargement)
   Future<void> chargerOffres() async {
     _page = 0;
     plusDOffres.value = true;
     chargement.value = true;
     erreur.value = '';
-
     final resultat = await _voirLesOffres(page: _page, limite: _limite);
-
-    // .fold : si Left (erreur) → affiche l'erreur
-    //         si Right (données) → met à jour la liste
     resultat.fold(
-      (msg)   => erreur.value = msg,
+      (msg) => erreur.value = msg,
       (liste) {
         offres.assignAll(liste);
         plusDOffres.value = liste.length == _limite;
         _page++;
       },
     );
-
     chargement.value = false;
   }
 
-  // Charge les offres suivantes (scroll infini)
   Future<void> chargerPlus() async {
     if (chargementPlus.value || !plusDOffres.value) return;
-
     chargementPlus.value = true;
-
     final resultat = await _voirLesOffres(page: _page, limite: _limite);
-
-    resultat.fold(
-      (_)     => null, // silence sur l'erreur de pagination
-      (liste) {
-        offres.addAll(liste);
-        plusDOffres.value = liste.length == _limite;
-        _page++;
-      },
-    );
-
+    resultat.fold((_) => null, (liste) {
+      offres.addAll(liste);
+      plusDOffres.value = liste.length == _limite;
+      _page++;
+    });
     chargementPlus.value = false;
   }
 
-  // Recherche une offre par texte
   Future<void> rechercher(String texte) async {
     if (texte.trim().isEmpty) {
       chargerOffres();
       return;
     }
-
     chargement.value = true;
     erreur.value = '';
-
     final resultat = await _chercherOffres(texte);
-
     resultat.fold(
-      (msg)   => erreur.value = msg,
-      (liste) => offres.assignAll(liste),
-    );
-
+        (msg) => erreur.value = msg, (liste) => offres.assignAll(liste));
     chargement.value = false;
   }
 
-  // Change l'onglet (Recommandées / Récentes)
   void changerOnglet(String onglet) {
     if (ongletActif.value == onglet) return;
     ongletActif.value = onglet;
-    chargerOffres();
+    if (onglet == 'recommandees' && recommandations.isEmpty) {
+      chargerRecommandations();
+    } else if (onglet != 'recommandees') {
+      chargerOffres();
+    }
   }
 
-  // Rafraîchit tout (pull to refresh)
-  Future<void> rafraichir() => chargerOffres();
+  Future<void> rafraichir() async {
+    if (ongletActif.value == 'recommandees') {
+      await chargerRecommandations();
+    } else {
+      await chargerOffres();
+    }
+  }
 
-  // Charge les stats du dashboard
   Future<void> chargerStats() async {
     final resultat = await _voirStats();
-    resultat.fold(
-      (_)     => null,
-      (stats) => totalOffres.value = stats['total_jobs'] as int? ?? 0,
-    );
+    resultat.fold((_) => null,
+        (stats) => totalOffres.value = stats['total_jobs'] as int? ?? 0);
   }
+
+  List<OffreEmploi> get offresAffichees =>
+      ongletActif.value == 'recommandees' && aRecommandations
+          ? recommandations
+          : offres;
 }

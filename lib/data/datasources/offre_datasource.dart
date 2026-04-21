@@ -10,11 +10,11 @@ class OffreDataSource {
 
   // L'URL de notre API FastAPI
   // En local : http://10.0.2.2:8000 (émulateur Android)
-  // En production : https://ton-api.render.com
+  // En production VPS Contabo : http://95.111.244.63:8000
   OffreDataSource()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'http://10.0.2.2:8000',
+            baseUrl: 'http://95.111.244.63:8000',
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 15),
             headers: {'Content-Type': 'application/json'},
@@ -30,15 +30,15 @@ class OffreDataSource {
     int limite = 20,
   }) async {
     final params = <String, dynamic>{
-      'skip':       page * limite,
-      'limit':      limite,
-      'sort_by':    'scraped_at',
+      'skip': page * limite,
+      'limit': limite,
+      'sort_by': 'scraped_at',
       'sort_order': 'desc',
     };
 
-    if (recherche != null && recherche.isNotEmpty) params['search']   = recherche;
-    if (source != null)                             params['source']   = source;
-    if (localisation != null)                       params['location'] = localisation;
+    if (recherche != null && recherche.isNotEmpty) params['search'] = recherche;
+    if (source != null) params['source'] = source;
+    if (localisation != null) params['location'] = localisation;
 
     final response = await _dio.get('/jobs', queryParameters: params);
 
