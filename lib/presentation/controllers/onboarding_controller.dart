@@ -105,6 +105,17 @@ class OnboardingController extends GetxController {
           await _candidatDs.matcherCv(cheminFichier: cheminCv.value, topK: 20);
       recommandations.assignAll(result.jobs);
       messageEtat.value = '${result.totalMatched} offres trouvées !';
+
+      // Enregistrement asynchrone dans Supabase (ne bloque pas l'UI)
+      _candidatDs.inscrireCandidatSupabase(
+        cheminFichier: cheminCv.value,
+        nom: nom.value.trim(),
+        metier: metier.value.trim(),
+        ville: ville.value.trim(),
+        email: email.value.trim(),
+        telephone: telephone.value.trim(),
+      );
+
       await _sauvegarderEtTerminer();
     } catch (e) {
       erreur.value =

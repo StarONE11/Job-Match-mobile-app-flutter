@@ -75,6 +75,15 @@ class ProfilController extends GetxController {
       nomCv.value = nomF;
       cvCharge.value = true;
       dateCv.value = 'Mis à jour à l\'instant';
+      // Sync Supabase en arrière-plan
+      _candidatDs.inscrireCandidatSupabase(
+        cheminFichier: chemin,
+        nom: _storage.nom,
+        metier: _storage.metier,
+        ville: _storage.ville,
+        email: _storage.email,
+        telephone: _storage.telephone,
+      );
       Get.snackbar('CV mis à jour', 'Votre CV a été analysé avec succès.',
           snackPosition: SnackPosition.BOTTOM);
     } catch (_) {

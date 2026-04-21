@@ -56,4 +56,34 @@ class CandidatDataSource {
       jobs: rawJobs,
     );
   }
+
+  /// Inscrit le candidat dans Supabase (profil + CV embedding).
+  /// Silencieux en cas d'erreur : l'app continue même si la sync échoue.
+  Future<void> inscrireCandidatSupabase({
+    required String cheminFichier,
+    required String nom,
+    required String metier,
+    required String ville,
+    required String email,
+    required String telephone,
+  }) async {
+    try {
+      final fichier = File(cheminFichier);
+      if (!fichier.existsSync()) return;
+
+      final formData = FormData.fromMap({
+        'name': nom,
+        'job_title': metier,
+        'city': ville,
+        'email': email,
+        'phone': telephone,
+        'file': await MultipartFile.fromFile(cheminFichier,
+            filename: fichier.uri.pathSegments.last),
+      });
+
+      await _dio.post('/candidates/register', data: formData);
+    } catch (_) {
+      // Erreur réseau ignorée — la sync sera retentée au prochain lancement
+    }
+  }
 }
